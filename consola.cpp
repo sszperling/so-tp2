@@ -37,11 +37,11 @@ static void load(list<string> params) {
 
 	//All nodes are ready before starting
 	for (unsigned int i = 1; i < np; i++){
-		freeNodes.push(i+1);
+		freeNodes.push(i);
 	}
 
 	//For each file find a ready node to send it to
-    for (list<string>::iterator it=params.begin(); it != params.end(); ++it) {
+	for (list<string>::iterator it=params.begin(); it != params.end(); ++it) {
 		if (freeNodes.empty()){
 			MPI_Recv(&message, 1, MPI_C_BOOL, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &Stat);
 			freeNodes.push(Stat.MPI_SOURCE);
@@ -50,7 +50,7 @@ static void load(list<string> params) {
 		string command = (char)1 + *it;
 		MPI_Send(command.c_str(), command.length()+1, MPI_CHAR, freeNodes.front(), 0, MPI_COMM_WORLD);
 		freeNodes.pop();
-    }
+	}
 
 	//Wait for all nodes to be ready
 	while(freeNodes.size() < np-1){
