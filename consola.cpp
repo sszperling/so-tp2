@@ -189,6 +189,9 @@ static void addAndInc(string key) {
     }
     MPI_Waitall(np-1, reqs, stats);
     // TODO: Hay que esperar la confirmacion de que termino de procesar? si es asi podemos usar otro tag
+    //MPI_Recv(&message, message_length, MPI_CHAR, elPrimero+1, MPI_ANY_TAG, MPI_COMM_WORLD, &Stat);
+
+
 
     cout << "Agregado: " << key << endl;
 }
