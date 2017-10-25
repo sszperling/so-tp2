@@ -1,0 +1,39 @@
+En este trabajo práctico se implementa un DistributedHashMap, una versión distribuida del ConcurrentHashMap implementado en el anterior trabajo.
+
+Como cualquier sistema distribuido, el cómputo será distribuido entre un conjunto de procesos, los cuales corren en distintas máquinas, los cuales llamaremos nodos. Estos nodos se comunicarán entre sí mediante el uso de envío de mensajes, para ello haremos uso del estándar MPI.
+
+El sistema estará formado de la siguiente manera:
+\begin{itemize}
+\item Un nodo distinguido, el cual será una consola interactiva que llevará a cargo la entrada y salida de comandos y resultados.
+\item Los nodos restantes, que cada uno de ellos tendrá su propio HashMap local y hará las tareas que le asigne la consola.
+\end{itemize}
+
+\section{Comandos}
+
+Para que los nodos distingan qué comando le está enviando la consola, decidimos enviar un string el cual tendrá como primer carácter un número, haciendo referencia al comando que hay que el nodo debe ejecutar.
+\begin{itemize}
+\item 0 Quit
+\item 1 Load
+\item 2 Member
+\item 3 Maximum
+\item 4 Add And Inc
+\end{itemize}
+
+La espera de estos mensajes con los comandos, se hace de manera bloqueante ya que el nodo no puede computar nada sin un comando asignado.
+
+\subsection{Quit}
+
+Este comando debe terminar la ejecución de todos los nodos, para ello la consola envía de forma no bloqueante a todos los nodos que deben terminarse, una vez que la consola esté segura que este mensaje llegó a todos los nodos puede terminar su ejecución.
+
+\subsection{Load}
+
+El comando load tiene la funcionalidad de cargar los archivos que se recibe por parámetro, cada nodo procesara un archivo, por lo que la consola enviará de forma no bloqueante el comando load y qué archivo debe procesar el nodo, si hay más archivos que nodos esperaremos a la confirmación de algún nodo que haya terminado, para luego enviarle otro archivo. Una vez que la consola envió todos los comandos respectivos a los archivos, hace una espera bloqueante de la confirmación de los nodos que están procesando archivos.
+
+\subsection{Member}
+Aquí la respuesta es sí la clave se encuentra en el sistema. Se nos ocurrió resolverlo de la siguiente manera: La consola envía de manera no bloqueante a todos los nodos el comando member con la key a buscar, y después la misma hace una espera bloqueante de la respuesta de los nodos y nos fijamos si alguno tenía la clave dicha.
+
+\subsection{Maximum}
+
+\subsection{Add And Inc}
+
+
