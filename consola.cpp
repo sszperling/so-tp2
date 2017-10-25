@@ -157,7 +157,38 @@ static void member(string key) {
 // Esta función suma uno a *key* en algún nodo
 static void addAndInc(string key) {
 
-    // TODO: Implementar
+    string command = (char)4 + key; //addAndInc CMD + KEY //Se podria pasar la key nada mas al primero que lo atrapa
+
+    //BCAST
+    MPI_Request reqs[np-1];   // required variable for non-blocking calls
+    MPI_Status stats[np-1];   // required variable for Waitall routine
+    for (unsigned int i = 1; i < np; i++){
+        MPI_Isend(&command,  command.length()+1, MPI_CHAR, i, 0, MPI_COMM_WORLD, &reqs[i-1]);
+    }
+    MPI_Waitall(np-1, reqs, stats);
+
+    //Espero los cante pri no bloqueantemente
+    bool cantePriBuff[np-1]; //Buscar como hacer mensajes que no nos importe lo de adentro
+    MPI_Request cantePriReq[np-1];
+    MPI_Status cantePriStatus[np-1];
+    for (unsigned int i = 1; i < np; i++) {
+        MPI_Irecv(&cantePriBuff[i-1], 1, MPI_C_BOOL, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &cantePriReq[i-1]);
+    }
+
+
+    bool noCantaronPri = true;
+    int elPrimero;
+    for (unsigned int i = 1; i < np; i++) {
+        int indexRecv;
+        MPI_Waitany(np - 1, cantePriReq, &indexRecv, stats);//me parece que hay que ir sacando los que ya van terminando
+        MPI_Isend(&noCantaronPri,  1, MPI_C_BOOL, indexRecv, 0, MPI_COMM_WORLD, &reqs[indexRecv-1]);
+        if (noCantaronPri) {
+            elPrimero = indexRecv;
+            noCantaronPri = false;
+        }
+    }
+    MPI_Waitall(np-1, reqs, stats);
+    // TODO: Hay que esperar la confirmacion de que termino de procesar? si es asi podemos usar otro tag
 
     cout << "Agregado: " << key << endl;
 }

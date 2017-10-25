@@ -74,8 +74,10 @@ void nodo(unsigned int rank) {
 				MPI_Send(response.c_str(), response.length()+1, MPI_CHAR, 0, currentCount, MPI_COMM_WORLD);
 				printf("Nodo %d terminó de enviar sus palabras\n", rank);
 
+			}else if (message[0] == 4){	//ADD AND INC
+				//TODO
 			}else{						//SHOULD NOT HAPPEN
-				printf("WTF%d\n", message[0]);
+				printf("q onda?%d\n", message[0]);
 			}
 		}
     }
