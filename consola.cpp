@@ -163,35 +163,34 @@ static void addAndInc(string key) {
     MPI_Request reqs[np-1];   // required variable for non-blocking calls
     MPI_Status stats[np-1];   // required variable for Waitall routine
     for (unsigned int i = 1; i < np; i++){
-        MPI_Isend(&command,  command.length()+1, MPI_CHAR, i, 0, MPI_COMM_WORLD, &reqs[i-1]);
+        MPI_Isend(command.c_str(),  command.length()+1, MPI_CHAR, i, 0, MPI_COMM_WORLD, &reqs[i-1]);
     }
     MPI_Waitall(np-1, reqs, stats);
 
     //Espero los cante pri no bloqueantemente
-    bool cantePriBuff[np-1]; //Buscar como hacer mensajes que no nos importe lo de adentro
+    bool dummyBuf;
+    MPI_Status dummyStat;
+
     MPI_Request cantePriReq[np-1];
-    MPI_Status cantePriStatus[np-1];
     for (unsigned int i = 1; i < np; i++) {
-        MPI_Irecv(&cantePriBuff[i-1], 1, MPI_C_BOOL, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &cantePriReq[i-1]);
+        MPI_Irecv(&dummyBuf, 0, MPI_C_BOOL, i, 2, MPI_COMM_WORLD, &cantePriReq[i-1]);
     }
 
 
     bool noCantaronPri = true;
-    int elPrimero;
+    int elPrimero = MPI_ANY_SOURCE;
     for (unsigned int i = 1; i < np; i++) {
         int indexRecv;
-        MPI_Waitany(np - 1, cantePriReq, &indexRecv, stats);//me parece que hay que ir sacando los que ya van terminando
-        MPI_Isend(&noCantaronPri,  1, MPI_C_BOOL, indexRecv, 0, MPI_COMM_WORLD, &reqs[indexRecv-1]);
+        MPI_Waitany(np - 1, cantePriReq, &indexRecv, &dummyStat);
+        MPI_Isend(&noCantaronPri, 1, MPI_C_BOOL, indexRecv+1, 0, MPI_COMM_WORLD, &reqs[indexRecv]);
         if (noCantaronPri) {
-            elPrimero = indexRecv;
+            elPrimero = indexRecv + 1;
             noCantaronPri = false;
         }
     }
     MPI_Waitall(np-1, reqs, stats);
-    // TODO: Hay que esperar la confirmacion de que termino de procesar? si es asi podemos usar otro tag
-    //MPI_Recv(&message, message_length, MPI_CHAR, elPrimero+1, MPI_ANY_TAG, MPI_COMM_WORLD, &Stat);
 
-
+    MPI_Recv(&dummyBuf, 0, MPI_C_BOOL, elPrimero, 4, MPI_COMM_WORLD, &dummyStat);
 
     cout << "Agregado: " << key << endl;
 }

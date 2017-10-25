@@ -75,9 +75,23 @@ void nodo(unsigned int rank) {
 				printf("Nodo %d terminó de enviar sus palabras\n", rank);
 
 			}else if (message[0] == 4){	//ADD AND INC
-				//TODO
+				bool cantePri = true;
+				MPI_Status dummyStat;
+				// cantar pri
+				trabajarArduamente();
+				MPI_Send(&cantePri, 0, MPI_C_BOOL, 0, 2, MPI_COMM_WORLD);
+				// recibir pri
+				MPI_Recv(&cantePri, 1, MPI_C_BOOL, 0, 0, MPI_COMM_WORLD, &dummyStat);
+				if(cantePri) {
+					// tengo pri
+					string key(&message[1]);
+					myHashMap.addAndInc(key);
+					printf("Nodo %d agregó la palabra %s\n", rank, &message[1]);
+					trabajarArduamente();
+					MPI_Send(&cantePri, 0, MPI_C_BOOL, 0, 4, MPI_COMM_WORLD);
+				}
 			}else{						//SHOULD NOT HAPPEN
-				printf("q onda?%d\n", message[0]);
+				printf("q onda? %d\n", message[0]);
 			}
 		}
     }
