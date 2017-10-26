@@ -34,6 +34,8 @@ Este comando debe terminar la ejecución de todos los nodos, para ello la consol
 
 El comando load tiene la funcionalidad de cargar los archivos que se recibe por parámetro, cada nodo procesara un archivo, por lo que la consola enviará de forma no bloqueante el comando load y qué archivo debe procesar el nodo, si hay más archivos que nodos esperaremos a la confirmación de algún nodo que haya terminado, para luego enviarle otro archivo. Una vez que la consola envió todos los comandos respectivos a los archivos, hace una espera bloqueante de la confirmación de los nodos que están procesando archivos.
 
+Debe destacarse que en nuestra implementación la carga se asigna de forma secuencial (es decir, en orden de rango ascendente), asumiendo que todos los nodos están listos y disponibles desde el principio. Luego que a todos los nodos les fue asignado al menos un archivo, el orden en que se envían los archivos restantes depende del orden en que la consola recibe el mensaje de disponibilidad de cada nodo.
+
 \subsection{member}
 
 Aquí la respuesta es sí la clave se encuentra en el sistema. Se nos ocurrió resolverlo de la siguiente manera: La consola envía de manera no bloqueante a todos los nodos el comando member con la key a buscar, y después la misma hace una espera bloqueante de la respuesta de los nodos y nos fijamos si alguno tenía la clave dicha.
