@@ -1,3 +1,5 @@
+\section{Introducción}
+
 En este trabajo práctico se implementa un DistributedHashMap, una versión distribuida del ConcurrentHashMap implementado en el anterior trabajo.
 
 Como cualquier sistema distribuido, el cómputo será distribuido entre un conjunto de procesos, los cuales corren en distintas máquinas, los cuales llamaremos nodos. Estos nodos se comunicarán entre sí mediante el uso de envío de mensajes, para ello haremos uso del estándar MPI.
@@ -11,29 +13,53 @@ El sistema estará formado de la siguiente manera:
 \section{Comandos}
 
 Para que los nodos distingan qué comando le está enviando la consola, decidimos enviar un string el cual tendrá como primer carácter un número, haciendo referencia al comando que hay que el nodo debe ejecutar.
+
 \begin{itemize}
-\item 0 Quit
-\item 1 Load
-\item 2 Member
-\item 3 Maximum
-\item 4 Add And Inc
+\item 0 - quit
+\item 1 - load
+\item 2 - member
+\item 3 - maximum
+\item 4 - addAndInc
 \end{itemize}
 
 La espera de estos mensajes con los comandos, se hace de manera bloqueante ya que el nodo no puede computar nada sin un comando asignado.
 
-\subsection{Quit}
+A la hora de informar a los nodos de cada pedido, consideramos utilizar un \texttt{MPI\_Bcast}. Sin embargo, dado que no podemos hacer un \texttt{MPI\_Probe} de los mensajes enviados por broadcast, no podemos saber el tamaño del buffer requerido. Como algunos comandos requieren enviar otra información, un probe sería necesario más adelante de todos modos. Decidimos hacer un pseudo-broadcast con \texttt{MPI\_Isend}, y que el resto de los caracteres del mensaje contengan el parámetro que corresponda según el comando. Esto también nos permite ser selectivos y no siempre notificar a todos los nodos (como por ejemplo, durante un load).
+
+\subsection{quit}
 
 Este comando debe terminar la ejecución de todos los nodos, para ello la consola envía de forma no bloqueante a todos los nodos que deben terminarse, una vez que la consola esté segura que este mensaje llegó a todos los nodos puede terminar su ejecución.
 
-\subsection{Load}
+\subsection{load}
 
 El comando load tiene la funcionalidad de cargar los archivos que se recibe por parámetro, cada nodo procesara un archivo, por lo que la consola enviará de forma no bloqueante el comando load y qué archivo debe procesar el nodo, si hay más archivos que nodos esperaremos a la confirmación de algún nodo que haya terminado, para luego enviarle otro archivo. Una vez que la consola envió todos los comandos respectivos a los archivos, hace una espera bloqueante de la confirmación de los nodos que están procesando archivos.
 
-\subsection{Member}
+\subsection{member}
+
 Aquí la respuesta es sí la clave se encuentra en el sistema. Se nos ocurrió resolverlo de la siguiente manera: La consola envía de manera no bloqueante a todos los nodos el comando member con la key a buscar, y después la misma hace una espera bloqueante de la respuesta de los nodos y nos fijamos si alguno tenía la clave dicha.
 
-\subsection{Maximum}
+La misma funcionalidad se puede lograr con \texttt{MPI\_Reduce} en forma de OR: el resultado se agregaría del lado de la consola, siendo verdadero si alguno de los nodos envía un verdadero, o falso en caso contrario. No tuvimos tiempo para probar cuán eficiente sería un approach contra el otro, por lo que optamos dejar la versión que utiliza los comandos más comunes (Send y Recv).
 
-\subsection{Add And Inc}
+\subsection{maximum}
 
+En nuestra implementación, los nodos envían una palabra con su cantidad de repeticiones por mensaje. Estos mensajes tienen un código de prefijo (similar a los broadcasts de la consola) que avisan si el nodo a) tiene más palabras para enviar; b) envía la última palabra o c) está vacío. La consola espera los mensajes de cada nodo e interpreta de manera acorde, llevando una cuenta de cuantos nodos quedan por terminar.
 
+Una vez que este proceso finaliza, la consola tiene una copia temporal del mapa que puede consultar para responder la consulta del usuario. La misma se borra al finalizar.
+
+\subsection{addAndInc}
+
+Este comando fue el que nos resultó más complejo sincronizar, ya que debe informarse a todos los nodos pero solo uno debe manejar el pedido. Lo diseñamos de la siguiente forma:
+
+\begin{itemize}
+	\item Se envía el pedido a todos los nodos y se espera que todos lo reciban
+
+	\item Los nodos envían de forma bloqueante el ready
+
+	\item La consola escucha a los nodos uno por uno, respondiendo solamente al primero que el mismo debe manejar el pedido, y se libera a los demás
+
+	\item El nodo elegido procesa el addAndInc y luego avisa de forma bloqueante a la consola un nuevo ready
+
+	\item La consola espera a que todos los nodos hayan recibido su respuesta y, por último, a que el nodo elegido haya finalizado
+\end{itemize}
+
+El problema que nos surge con este approach es el envío de información que no será utilizada a todos los nodos. Por lo demás, las esperas aseguran que el envío no sufre condiciones de carrera y que cada pedido es procesado una sola vez.
