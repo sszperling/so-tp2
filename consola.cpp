@@ -282,11 +282,11 @@ static bool procesar_comandos() {
 void consola(unsigned int np_param) {
     np = np_param;
     printf("Comandos disponibles:\n");
-    printf("  "CMD_LOAD" <arch_1> <arch_2> ... <arch_n>\n");
-    printf("  "CMD_ADD" <string>\n");
-    printf("  "CMD_MEMBER" <string>\n");
-    printf("  "CMD_MAXIMUM"\n");
-    printf("  "CMD_SQUIT"|"CMD_QUIT"\n");
+    printf("  " CMD_LOAD " <arch_1> <arch_2> ... <arch_n>\n");
+    printf("  " CMD_ADD " <string>\n");
+    printf("  " CMD_MEMBER " <string>\n");
+    printf("  " CMD_MAXIMUM "\n");
+    printf("  " CMD_SQUIT "|" CMD_QUIT "\n");
 	//MPI_Status Stat;
 	//char inmsg;
 	//MPI_Probe(MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &Stat);
